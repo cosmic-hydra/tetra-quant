@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from typing import Any
+from urllib.parse import urlparse
 
 import pytest
 from openbb_core.app.service.user_service import UserService
@@ -235,13 +236,15 @@ class TestTaxonomyRegistry:
         """FASB_STANDARD taxonomies should point to xbrl.fasb.org."""
         for key, config in TAXONOMIES.items():
             if config.style == TaxonomyStyle.FASB_STANDARD:
-                assert "xbrl.fasb.org" in config.base_url_template, key
+                host = urlparse(config.base_url_template).hostname
+                assert host == "xbrl.fasb.org", key
 
     def test_sec_embedded_taxonomies(self):
         """SEC_EMBEDDED taxonomies should point to xbrl.sec.gov."""
         for key, config in TAXONOMIES.items():
             if config.style == TaxonomyStyle.SEC_EMBEDDED:
-                assert "xbrl.sec.gov" in config.base_url_template, key
+                host = urlparse(config.base_url_template).hostname
+                assert host == "xbrl.sec.gov", key
 
     def test_url_templates_have_year_placeholder(self):
         """Non-STATIC taxonomies must have {year} in their base_url_template."""
