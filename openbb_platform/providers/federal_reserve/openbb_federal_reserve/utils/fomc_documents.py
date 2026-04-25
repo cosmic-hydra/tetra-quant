@@ -63,6 +63,8 @@ def get_current_fomc_documents(url: str | None = None) -> list:
     """
     # pylint: disable=import-outside-toplevel
     import re  # noqa
+    from urllib.parse import urljoin, urlparse
+
     from bs4 import BeautifulSoup
     from openbb_core.provider.utils.helpers import make_request
 
@@ -73,6 +75,7 @@ def get_current_fomc_documents(url: str | None = None) -> list:
         if beige_books:
             data_releases.extend(beige_books)
 
+    base_url = "https://www.federalreserve.gov"
     url = (
         url
         if url is not None
@@ -82,16 +85,16 @@ def get_current_fomc_documents(url: str | None = None) -> list:
     soup = BeautifulSoup(response.content, "html.parser")
 
     for link in soup.find_all("a"):
-        url = link.get("href", "")  # type: ignore[assignment]
+        href = link.get("href", "")
 
-        if "/newsevents/pressreleases" in url:
+        if "/newsevents/pressreleases" in href:
             continue
 
-        file_url = (
-            f"https://www.federalreserve.gov{url}"
-            if not url.startswith("https://www.federalreserve.gov")
-            else url
-        )
+        file_url = urljoin(base_url, href)
+        parsed = urlparse(file_url)
+        if parsed.hostname != "www.federalreserve.gov":
+            continue
+
         date = file_url.split("/")[
             -2 if file_url.endswith("/default.htm") else -1
         ].split(".")[0]
